@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizar Red de Internet</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #mapa{
+            height: 400px;
+        }
+        #mapa-seleccion {
+            width: 100%;
+            height: 500px;
+        }
+        .container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1 class="text-center">Mapa de la Red de Internet</h1>
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Mapa con nodos -->
+                <div id="mapa">
+                    {{ mapa|safe }}
+                </div>
+                <!-- Mapa de selección (oculto inicialmente) -->
+                <div id="mapa-seleccion" style="display: none;"></div>
+            </div>
+
+            <div class="col-md-4">
+                <h3>Agregar Nodo</h3>
+                <!-- Formulario para agregar un nodo -->
+                <form id="form-agregar-nodo" method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="nombre">Nombre del Nodo:</label>
+                        <input type="text" id="nombre" name="nombre" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="latitud">Latitud:</label>
+                        <input type="text" id="latitud" name="latitud" class="form-control" readonly required>
+                    </div>
+                    <div class="form-group">
+                        <label for="longitud">Longitud:</label>
+                        <input type="text" id="longitud" name="longitud" class="form-control" readonly required>
+                    </div>
+                    <button type="button" id="btn-seleccionar" class="btn btn-primary mb-3">Seleccionar Posición en el Mapa</button>
+                    <button type="submit" class="btn btn-success">Agregar Nodo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agregar el script de Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+    const mapaNodos = document.getElementById('mapa');
+    const mapaSeleccion = document.getElementById('mapa-seleccion');
+    const latitudInput = document.getElementById('latitud');
+    const longitudInput = document.getElementById('longitud');
+    const btnSeleccionar = document.getElementById('btn-seleccionar');
+
+    let mapPrincipal, mapSeleccion;
+
+    // Inicializar el mapa principal (asumiendo que ya está renderizado por Django)
+    mapPrincipal = L.map(mapaNodos);
+
+    btnSeleccionar.addEventListener('click', function () {
+        mapaNodos.style.display = 'none';
+        mapaSeleccion.style.display = 'block';
+
+        if (!mapSeleccion) {
+            mapSeleccion = L.map('mapa-seleccion').setView([-12.0464, -77.0428], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(mapSeleccion);
+
+            mapSeleccion.on('click', function (e) {
+                latitudInput.value = e.latlng.lat.toFixed(6);
+                longitudInput.value = e.latlng.lng.toFixed(6);
+            });
+        }
+
+        mapSeleccion.invalidateSize();
+    });
+
+    const formAgregarNodo = document.getElementById('form-agregar-nodo');
+    formAgregarNodo.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const nombre = document.getElementById('nombre').value;
+        const latitud = latitudInput.value;
+        const longitud = longitudInput.value;
+
+        if (!nombre || !latitud || !longitud) {
+            alert("Por favor, completa todos los campos.");
+            return;
+        }
+
+        fetch('/api/agregar_nodo/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ nombre, latitud, longitud }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.mensaje) {
+                alert(data.mensaje);
+                
+                // Ocultar el mapa de selección y mostrar el mapa principal
+                mapaSeleccion.style.display = 'none';
+                mapaNodos.style.display = 'block';
+                
+                // Actualizar el mapa principal
+                if (mapPrincipal) {
+                    mapPrincipal.invalidateSize();
+                    // Aquí puedes añadir lógica para agregar el nuevo nodo al mapa principal si es necesario
+                }
+
+                // Limpiar el formulario
+                document.getElementById('nombre').value = '';
+                latitudInput.value = '';
+                longitudInput.value = '';
+                location.reload();
+            } else if (data.error) {
+                alert(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Hubo un problema al agregar el nodo.');
+        });
+    });
+});
+    </script>
+
+</body>
+
+</html>
