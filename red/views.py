@@ -23,6 +23,7 @@ class ConexionViewSet(viewsets.ModelViewSet):
     serializer_class = ConexionSerializer
 
 # Función para obtener los nodos y generar el mapa
+# Función para obtener los nodos y generar el mapa
 def generar_mapa():
     # Crear un mapa centrado en Lima, Perú
     mapa = folium.Map(location=[-12.0464, -77.0428], zoom_start=13)
@@ -32,7 +33,8 @@ def generar_mapa():
     for nodo in nodos:
         folium.Marker(
             [nodo.latitud, nodo.longitud],
-            popup=f'{nodo.nombre}',
+            # Mostramos el ID y el nombre en el popup
+            popup=f'ID: {nodo.id}<br>Nombre: {nodo.nombre}',
             tooltip='Haz clic para seleccionar'
         ).add_to(mapa)
     
@@ -45,6 +47,7 @@ def generar_mapa():
 
     # Retornar el HTML del mapa
     return mapa._repr_html_()
+
 
 # HTML view para visualizar el mapa
 def visualizar_red(request):
