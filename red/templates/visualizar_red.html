@@ -56,6 +56,25 @@
                     <button type="button" id="btn-seleccionar" class="btn btn-primary mb-3">Seleccionar Posición en el Mapa</button>
                     <button type="submit" class="btn btn-success">Agregar Nodo</button>
                 </form>
+
+                <h3 class="mt-4">Agregar Conexión</h3>
+                <!-- Formulario para agregar una conexión -->
+                <form id="form-agregar-conexion" method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="origen">ID del Nodo de Origen:</label>
+                        <input type="number" id="origen" name="origen" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="destino">ID del Nodo de Destino:</label>
+                        <input type="number" id="destino" name="destino" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="peso">Peso de la Conexión:</label>
+                        <input type="number" id="peso" name="peso" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Crear Conexión</button>
+                </form>
             </div>
         </div>
     </div>
@@ -65,88 +84,128 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-    const mapaNodos = document.getElementById('mapa');
-    const mapaSeleccion = document.getElementById('mapa-seleccion');
-    const latitudInput = document.getElementById('latitud');
-    const longitudInput = document.getElementById('longitud');
-    const btnSeleccionar = document.getElementById('btn-seleccionar');
+            const mapaNodos = document.getElementById('mapa');
+            const mapaSeleccion = document.getElementById('mapa-seleccion');
+            const latitudInput = document.getElementById('latitud');
+            const longitudInput = document.getElementById('longitud');
+            const btnSeleccionar = document.getElementById('btn-seleccionar');
 
-    let mapPrincipal, mapSeleccion;
+            let mapPrincipal, mapSeleccion;
 
-    // Inicializar el mapa principal (asumiendo que ya está renderizado por Django)
-    mapPrincipal = L.map(mapaNodos);
+            // Inicializar el mapa principal (asumiendo que ya está renderizado por Django)
+            mapPrincipal = L.map(mapaNodos);
 
-    btnSeleccionar.addEventListener('click', function () {
-        mapaNodos.style.display = 'none';
-        mapaSeleccion.style.display = 'block';
+            btnSeleccionar.addEventListener('click', function () {
+                mapaNodos.style.display = 'none';
+                mapaSeleccion.style.display = 'block';
 
-        if (!mapSeleccion) {
-            mapSeleccion = L.map('mapa-seleccion').setView([-12.0464, -77.0428], 13);
+                if (!mapSeleccion) {
+                    mapSeleccion = L.map('mapa-seleccion').setView([-12.0464, -77.0428], 13);
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(mapSeleccion);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(mapSeleccion);
 
-            mapSeleccion.on('click', function (e) {
-                latitudInput.value = e.latlng.lat.toFixed(6);
-                longitudInput.value = e.latlng.lng.toFixed(6);
-            });
-        }
-
-        mapSeleccion.invalidateSize();
-    });
-
-    const formAgregarNodo = document.getElementById('form-agregar-nodo');
-    formAgregarNodo.addEventListener('submit', function (event) {
-        event.preventDefault();
-
-        const nombre = document.getElementById('nombre').value;
-        const latitud = latitudInput.value;
-        const longitud = longitudInput.value;
-
-        if (!nombre || !latitud || !longitud) {
-            alert("Por favor, completa todos los campos.");
-            return;
-        }
-
-        fetch('/api/agregar_nodo/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ nombre, latitud, longitud }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.mensaje) {
-                alert(data.mensaje);
-                
-                // Ocultar el mapa de selección y mostrar el mapa principal
-                mapaSeleccion.style.display = 'none';
-                mapaNodos.style.display = 'block';
-                
-                // Actualizar el mapa principal
-                if (mapPrincipal) {
-                    mapPrincipal.invalidateSize();
-                    // Aquí puedes añadir lógica para agregar el nuevo nodo al mapa principal si es necesario
+                    mapSeleccion.on('click', function (e) {
+                        latitudInput.value = e.latlng.lat.toFixed(6);
+                        longitudInput.value = e.latlng.lng.toFixed(6);
+                    });
                 }
 
-                // Limpiar el formulario
-                document.getElementById('nombre').value = '';
-                latitudInput.value = '';
-                longitudInput.value = '';
-                location.reload();
-            } else if (data.error) {
-                alert(data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Hubo un problema al agregar el nodo.');
+                mapSeleccion.invalidateSize();
+            });
+
+            const formAgregarNodo = document.getElementById('form-agregar-nodo');
+            formAgregarNodo.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const nombre = document.getElementById('nombre').value;
+                const latitud = latitudInput.value;
+                const longitud = longitudInput.value;
+
+                if (!nombre || !latitud || !longitud) {
+                    alert("Por favor, completa todos los campos.");
+                    return;
+                }
+
+                fetch('/api/agregar_nodo/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ nombre, latitud, longitud }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.mensaje) {
+                        alert(data.mensaje);
+                        
+                        // Ocultar el mapa de selección y mostrar el mapa principal
+                        mapaSeleccion.style.display = 'none';
+                        mapaNodos.style.display = 'block';
+                        
+                        // Actualizar el mapa principal
+                        if (mapPrincipal) {
+                            mapPrincipal.invalidateSize();
+                            // Aquí puedes añadir lógica para agregar el nuevo nodo al mapa principal si es necesario
+                        }
+
+                        // Limpiar el formulario
+                        document.getElementById('nombre').value = '';
+                        latitudInput.value = '';
+                        longitudInput.value = '';
+                        location.reload();
+                    } else if (data.error) {
+                        alert(data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Hubo un problema al agregar el nodo.');
+                });
+            });
+
+            const formAgregarConexion = document.getElementById('form-agregar-conexion');
+            formAgregarConexion.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const origen = document.getElementById('origen').value;
+                const destino = document.getElementById('destino').value;
+                const peso = document.getElementById('peso').value;
+
+                if (!origen || !destino || !peso) {
+                    alert("Por favor, completa todos los campos para la conexión.");
+                    return;
+                }
+
+                fetch('/api/agregar_conexion/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ origen, destino, peso }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.mensaje) {
+                        alert(data.mensaje);
+                        // Limpiar el formulario
+                        document.getElementById('origen').value = '';
+                        document.getElementById('destino').value = '';
+                        document.getElementById('peso').value = '';
+                        location.reload();
+                    } else if (data.error) {
+                        alert(data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Hubo un problema al agregar la conexión.');
+                });
+            });
         });
-    });
-});
     </script>
 
 </body>

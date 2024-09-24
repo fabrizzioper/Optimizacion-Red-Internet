@@ -7,7 +7,6 @@ from .models import Nodo, Conexion
 from .serializers import NodoSerializer, ConexionSerializer
 import folium
 from django.http import JsonResponse
-# API para agregar un nuevo nodo desde la interfaz del mapa
 from django.views.decorators.csrf import csrf_exempt
 
 def home(request):
@@ -76,19 +75,26 @@ def agregar_nodo(request):
 
 
 # API para agregar una conexión entre dos nodos
+@csrf_exempt
 def agregar_conexion(request):
     if request.method == 'POST':
-        origen_id = request.POST.get('origen_id')
-        destino_id = request.POST.get('destino_id')
-        peso = request.POST.get('peso')
+        data = json.loads(request.body.decode('utf-8'))
+        origen_id = data.get('origen')
+        destino_id = data.get('destino')
+        peso = data.get('peso')
+
+        if not origen_id or not destino_id or peso is None:
+            return JsonResponse({'error': 'Faltan datos'}, status=400)
 
         try:
             origen = Nodo.objects.get(id=origen_id)
             destino = Nodo.objects.get(id=destino_id)
-            conexion = Conexion(origen=origen, destino=destino, peso=peso)
+            conexion = Conexion(origen=origen, destino=destino, peso=float(peso))
             conexion.save()
 
             return JsonResponse({'mensaje': 'Conexión agregada correctamente'})
         except Nodo.DoesNotExist:
             return JsonResponse({'error': 'Nodo no encontrado'}, status=404)
+        except ValueError:
+            return JsonResponse({'error': 'El peso debe ser un número válido'}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
