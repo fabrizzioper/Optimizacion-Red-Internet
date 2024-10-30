@@ -1,6 +1,5 @@
 # red/admin.py
 from django.contrib import admin
-from .models import Nodo, Conexion
+from .models import Nodo
 
 admin.site.register(Nodo)
-admin.site.register(Conexion)
