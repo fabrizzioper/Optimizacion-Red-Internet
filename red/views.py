@@ -97,3 +97,6 @@ def guardar_nodo(request):
         # Responder con éxito
         return JsonResponse({'status': 'Nodo guardado correctamente'})
     return JsonResponse({'status': 'Error'}, status=400)
+
+def pruebas_view(request):
+    return render(request, 'pruebas.html')
