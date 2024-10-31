@@ -1,243 +1,383 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agregar Nodo</title>
 
     <!-- Incluimos el CSS de Leaflet y Bootstrap -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" crossorigin=""/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+      crossorigin=""
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+    />
 
     <!-- Estilos personalizados -->
     <style>
-        body {
-            background-color: #f7f9fc;
-            font-family: Arial, sans-serif;
-            color: #333;
-        }
-        h1 {
-            font-weight: bold;
-            color: #007bff;
-        }
-        .container {
-            max-width: 1200px;
-        }
-        .form-container {
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .form-title {
-            font-size: 1.5rem;
-            color: #007bff;
-            font-weight: bold;
-            margin-bottom: 1.5rem;
-        }
-        .form-label {
-            font-weight: 600;
-            color: #495057;
-        }
-        .form-control {
-            border-radius: 6px;
-            background-color: #f9fafc;
-            border: 1px solid #ced4da;
-        }
-        .btn-custom {
-            width: 100%;
-            padding: 0.75rem;
-            font-weight: 600;
-            font-size: 1rem;
-            border-radius: 6px;
-            transition: background-color 0.3s;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        .btn-success {
-            background-color: #28a745;
-            border: none;
-        }
-        .btn-success:hover {
-            background-color: #218838;
-        }
-        #mapaPrincipal, #mapaSeleccion {
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-        }
+      body {
+        background-color: #f7f9fc;
+        font-family: Arial, sans-serif;
+        color: #333;
+      }
+      h1 {
+        font-weight: bold;
+        color: #007bff;
+      }
+      .container {
+        max-width: 1200px;
+      }
+      .form-container {
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .form-title {
+        font-size: 1.5rem;
+        color: #007bff;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+      }
+      .form-label {
+        font-weight: 600;
+        color: #495057;
+      }
+      .form-control {
+        border-radius: 6px;
+        background-color: #f9fafc;
+        border: 1px solid #ced4da;
+      }
+      .btn-custom {
+        width: 100%;
+        padding: 0.75rem;
+        font-weight: 600;
+        font-size: 1rem;
+        border-radius: 6px;
+        transition: background-color 0.3s;
+      }
+      .btn-primary {
+        background-color: #007bff;
+        border: none;
+      }
+      .btn-primary:hover {
+        background-color: #0056b3;
+      }
+      .btn-success {
+        background-color: #28a745;
+        border: none;
+      }
+      .btn-success:hover {
+        background-color: #218838;
+      }
+      #mapaPrincipal,
+      #mapaSeleccion {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <div class="container mt-5">
-        <h1 class="text-center mb-4">Agregar Nodo en el Mapa</h1>
-        <div class="row">
-            <!-- Mapa Principal -->
-            <div id="mapaPrincipal" class="col-8" style="height: 500px;">
-                {{ mapa_principal|safe }}
-            </div>
-
-            <!-- Mapa de Selección (oculto al inicio) -->
-            <div id="mapaSeleccion" class="col-lg-8 mb-3" style="height: 500px; display: none;">
-                <h5 class="text-center mb-3">Mapa de Selección</h5>
-            </div>
-
-            <!-- Contenedor de Botones y Formularios -->
-            <div class="col-lg-4">
-                <div id="buttonContainer" class="form-container text-center mb-3">
-                    <h4 class="text-center form-title">Opciones</h4>
-                    <button class="btn btn-primary btn-custom mt-3" onclick="mostrarFormularioNodo()">Agregar Nodo</button>
-                    <button class="btn btn-primary btn-custom mt-3" onclick="mostrarFormularioRuta()">Agregar Ruta</button>
-                    <button class="btn btn-primary btn-custom mt-3" onclick="cargarNodos()">Cargar Nodos</button>
-                </div>
-
-                <!-- Formulario para Agregar Nodo -->
-                <div id="formularioNodo" class="form-container mb-3" style="display: none;">
-                    <h4 class="text-center form-title">Detalles del Nodo</h4>
-                    <form class="mt-3">
-                        <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre del Nodo</label>
-                            <input type="text" id="nombre" class="form-control" placeholder="Ingrese el nombre">
-                        </div>
-                        <div class="mb-3">
-                            <label for="latitud" class="form-label">Latitud</label>
-                            <input type="text" id="latitud" class="form-control" placeholder="Seleccione en el mapa" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label for="longitud" class="form-label">Longitud</label>
-                            <input type="text" id="longitud" class="form-control" placeholder="Seleccione en el mapa" readonly>
-                        </div>
-                        <button type="button" class="btn btn-primary btn-custom mt-3" onclick="alternarMapas()">Seleccionar posición en el mapa</button>
-                        <button type="button" class="btn btn-success btn-custom mt-3" onclick="agregarNodo()">Agregar nodo</button>
-                    </form>
-                </div>
-
-                <!-- Formulario para Agregar Ruta -->
-                <div id="formularioRuta" class="form-container mb-3" style="display: none;">
-                    <h4 class="text-center form-title">Detalles de la Ruta</h4>
-                    <form class="mt-3">
-                        <div class="mb-3">
-                            <label for="nodoInicial" class="form-label">ID Nodo Inicial</label>
-                            <input type="text" id="nodoInicial" class="form-control" placeholder="Ingrese ID del nodo inicial">
-                        </div>
-                        <div class="mb-3">
-                            <label for="nodoFinal" class="form-label">ID Nodo Final</label>
-                            <input type="text" id="nodoFinal" class="form-control" placeholder="Ingrese ID del nodo final">
-                        </div>
-                        <div class="mb-3">
-                            <label for="peso" class="form-label">Peso</label>
-                            <input type="text" id="peso" class="form-control" placeholder="Ingrese el peso">
-                        </div>
-                        <button type="button" class="btn btn-success btn-custom mt-3" onclick="ocultarFormularioRuta()">Generar Ruta</button>
-                    </form>
-                </div>
-            </div>
+      <h1 class="text-center mb-4">Agregar Nodo en el Mapa</h1>
+      <div class="row">
+        <!-- Mapa Principal -->
+        <div id="mapaPrincipal" class="col-8" style="height: 500px">
+          {{ mapa_principal|safe }}
         </div>
+
+        <!-- Mapa de Selección (oculto al inicio) -->
+        <div
+          id="mapaSeleccion"
+          class="col-lg-8 mb-3"
+          style="height: 500px; display: none"
+        >
+          <h5 class="text-center mb-3">Mapa de Selección</h5>
+        </div>
+
+        <!-- Contenedor de Botones y Formularios -->
+        <div class="col-lg-4">
+          <div id="buttonContainer" class="form-container text-center mb-3">
+            <h4 class="text-center form-title">Opciones</h4>
+            <button
+              class="btn btn-primary btn-custom mt-3"
+              onclick="mostrarFormularioNodo()"
+            >
+              Agregar Nodo
+            </button>
+            <button
+              class="btn btn-primary btn-custom mt-3"
+              onclick="mostrarFormularioRuta()"
+            >
+              Agregar Ruta
+            </button>
+            <button
+              class="btn btn-primary btn-custom mt-3"
+              onclick="cargarNodos()"
+            >
+              Cargar Nodos
+            </button>
+          </div>
+
+          <!-- Formulario para Agregar Nodo -->
+          <div
+            id="formularioNodo"
+            class="form-container mb-3"
+            style="display: none"
+          >
+            <h4 class="text-center form-title">Detalles del Nodo</h4>
+            <form class="mt-3">
+              <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre del Nodo</label>
+                <input
+                  type="text"
+                  id="nombre"
+                  class="form-control"
+                  placeholder="Ingrese el nombre"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="latitud" class="form-label">Latitud</label>
+                <input
+                  type="text"
+                  id="latitud"
+                  class="form-control"
+                  placeholder="Seleccione en el mapa"
+                  readonly
+                />
+              </div>
+              <div class="mb-3">
+                <label for="longitud" class="form-label">Longitud</label>
+                <input
+                  type="text"
+                  id="longitud"
+                  class="form-control"
+                  placeholder="Seleccione en el mapa"
+                  readonly
+                />
+              </div>
+              <button
+                type="button"
+                class="btn btn-primary btn-custom mt-3"
+                onclick="alternarMapas()"
+              >
+                Seleccionar posición en el mapa
+              </button>
+              <button
+                type="button"
+                class="btn btn-success btn-custom mt-3"
+                onclick="agregarNodo()"
+              >
+                Agregar nodo
+              </button>
+            </form>
+          </div>
+
+          <!-- Formulario para Agregar Ruta -->
+          <div
+            id="formularioRuta"
+            class="form-container mb-3"
+            style="display: none"
+          >
+            <h4 class="text-center form-title">Detalles de la Ruta</h4>
+            <form class="mt-3">
+              <div class="mb-3">
+                <label for="nodoInicial" class="form-label"
+                  >ID Nodo Inicial</label
+                >
+                <input
+                  type="text"
+                  id="nodoInicial"
+                  class="form-control"
+                  placeholder="Ingrese ID del nodo inicial"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="nodoFinal" class="form-label">ID Nodo Final</label>
+                <input
+                  type="text"
+                  id="nodoFinal"
+                  class="form-control"
+                  placeholder="Ingrese ID del nodo final"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="peso" class="form-label">Peso</label>
+                <input
+                  type="text"
+                  id="peso"
+                  class="form-control"
+                  placeholder="Ingrese el peso"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn btn-success btn-custom mt-3"
+                onclick="agregarRuta()"
+              >
+                Generar Ruta
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Scripts de Bootstrap y Leaflet -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" crossorigin=""></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+      crossorigin=""
+    ></script>
 
     <!-- Script personalizado -->
     <script>
-        let mapa; // Variable para el mapa de selección
-        let marcador; // Variable para el marcador
+      let mapa; // Variable para el mapa de selección
+      let marcador; // Variable para el marcador
 
-        function alternarMapas() {
-            const mapaPrincipal = document.getElementById("mapaPrincipal");
-            const mapaSeleccion = document.getElementById("mapaSeleccion");
+      function alternarMapas() {
+        const mapaPrincipal = document.getElementById("mapaPrincipal");
+        const mapaSeleccion = document.getElementById("mapaSeleccion");
 
-            if (mapaPrincipal.style.display === "none") {
-                mapaPrincipal.style.display = "block";
-                mapaSeleccion.style.display = "none";
+        if (mapaPrincipal.style.display === "none") {
+          mapaPrincipal.style.display = "block";
+          mapaSeleccion.style.display = "none";
+        } else {
+          mapaPrincipal.style.display = "none";
+          mapaSeleccion.style.display = "block";
+
+          if (!mapa) {
+            mapa = L.map("mapaSeleccion").setView([-12.0464, -77.0428], 15);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+              maxZoom: 19,
+            }).addTo(mapa);
+            mapa.on("click", function (e) {
+              const { lat, lng } = e.latlng;
+              document.getElementById("latitud").value = lat;
+              document.getElementById("longitud").value = lng;
+              if (marcador) marcador.setLatLng([lat, lng]);
+              else marcador = L.marker([lat, lng]).addTo(mapa);
+              alternarMapas();
+            });
+          }
+        }
+      }
+
+      function agregarNodo() {
+        // Obtener los valores del formulario
+        const nombre = document.getElementById("nombre").value;
+        const latitud = document.getElementById("latitud").value;
+        const longitud = document.getElementById("longitud").value;
+
+        // Verificar que se hayan ingresado los valores necesarios
+        if (!nombre || !latitud || !longitud) {
+          alert(
+            "Por favor, complete todos los campos antes de agregar el nodo."
+          );
+          return;
+        }
+
+        // Enviar los datos del nodo al backend
+        fetch("/guardar_nodo/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}",
+          },
+          body: new URLSearchParams({
+            nombre: nombre,
+            latitud: latitud,
+            longitud: longitud,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status === "Nodo guardado correctamente") {
+              alert("Nodo agregado exitosamente");
+              location.reload(); // Recargar la página para ver el nodo en el mapa principal
+            }
+          })
+          .catch((error) => console.error("Error al agregar el nodo:", error));
+
+        ocultarFormularioNodo();
+      }
+
+      function agregarRuta() {
+        const nodoInicial = document.getElementById("nodoInicial").value;
+        const nodoFinal = document.getElementById("nodoFinal").value;
+        const peso = document.getElementById("peso").value;
+
+        // Verificar que todos los campos están llenos
+        if (!nodoInicial || !nodoFinal || !peso) {
+          alert(
+            "Por favor, complete todos los campos antes de generar la ruta."
+          );
+          return;
+        }
+
+        // Enviar los datos de la ruta al backend
+        fetch("/guardar_ruta/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}",
+          },
+          body: new URLSearchParams({
+            nodoInicial: nodoInicial,
+            nodoFinal: nodoFinal,
+            peso: peso,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status === "Ruta guardada correctamente") {
+              alert("Ruta generada exitosamente");
+
+              // Añadir la ruta al mapa usando GeoJSON si se recibió
+              if (data.ruta) {
+                L.geoJSON(data.ruta).addTo(mapa);
+              }
+
+              // Recargar el mapa para ver la nueva ruta
+              location.reload();
             } else {
-                mapaPrincipal.style.display = "none";
-                mapaSeleccion.style.display = "block";
-                
-                if (!mapa) {
-                    mapa = L.map('mapaSeleccion').setView([-12.0464, -77.0428], 15);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
-                    mapa.on('click', function(e) {
-                        const { lat, lng } = e.latlng;
-                        document.getElementById('latitud').value = lat;
-                        document.getElementById('longitud').value = lng;
-                        if (marcador) marcador.setLatLng([lat, lng]);
-                        else marcador = L.marker([lat, lng]).addTo(mapa);
-                        alternarMapas();
-                    });
-                }
+              alert(data.status);
             }
-        }
+          })
+          .catch((error) => console.error("Error al generar la ruta:", error));
 
-        function agregarNodo() {
-            // Obtener los valores del formulario
-            const nombre = document.getElementById('nombre').value;
-            const latitud = document.getElementById('latitud').value;
-            const longitud = document.getElementById('longitud').value;
+        ocultarFormularioRuta();
+      }
 
-            // Verificar que se hayan ingresado los valores necesarios
-            if (!nombre || !latitud || !longitud) {
-                alert("Por favor, complete todos los campos antes de agregar el nodo.");
-                return;
-            }
+      function mostrarFormularioNodo() {
+        document.getElementById("formularioNodo").style.display = "block";
+        document.getElementById("formularioRuta").style.display = "none";
+        document.getElementById("buttonContainer").style.display = "none";
+      }
 
-            // Enviar los datos del nodo al backend
-            fetch('/guardar_nodo/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: new URLSearchParams({
-                    'nombre': nombre,
-                    'latitud': latitud,
-                    'longitud': longitud
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'Nodo guardado correctamente') {
-                    alert('Nodo agregado exitosamente');
-                    location.reload(); // Recargar la página para ver el nodo en el mapa principal
-                }
-            })
-            .catch(error => console.error('Error al agregar el nodo:', error));
+      function ocultarFormularioNodo() {
+        document.getElementById("formularioNodo").style.display = "none";
+        document.getElementById("buttonContainer").style.display = "block";
+      }
 
-            ocultarFormularioNodo();
-        }
+      function mostrarFormularioRuta() {
+        document.getElementById("formularioRuta").style.display = "block";
+        document.getElementById("formularioNodo").style.display = "none";
+        document.getElementById("buttonContainer").style.display = "none";
+      }
 
-        function mostrarFormularioNodo() {
-            document.getElementById('formularioNodo').style.display = 'block';
-            document.getElementById('formularioRuta').style.display = 'none';
-            document.getElementById('buttonContainer').style.display = 'none';
-        }
+      function ocultarFormularioRuta() {
+        document.getElementById("formularioRuta").style.display = "none";
+        document.getElementById("buttonContainer").style.display = "block";
+      }
 
-        function ocultarFormularioNodo() {
-            document.getElementById('formularioNodo').style.display = 'none';
-            document.getElementById('buttonContainer').style.display = 'block';
-        }
-
-        function mostrarFormularioRuta() {
-            document.getElementById('formularioRuta').style.display = 'block';
-            document.getElementById('formularioNodo').style.display = 'none';
-            document.getElementById('buttonContainer').style.display = 'none';
-        }
-
-        function ocultarFormularioRuta() {
-            document.getElementById('formularioRuta').style.display = 'none';
-            document.getElementById('buttonContainer').style.display = 'block';
-        }
-
-        function cargarNodos() {
-            alert("Cargando nodos...");
-        }
+      function cargarNodos() {
+        alert("Cargando nodos...");
+      }
     </script>
-</body>
+  </body>
 </html>

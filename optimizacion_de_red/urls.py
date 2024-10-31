@@ -18,8 +18,12 @@ Including another URLconf
 # optimizacion_de_red/urls.py
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('red.urls')),  # Usa la raíz para la aplicación 'red'
+    path('', include('red.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [path('__reload__/', include('django_browser_reload.urls'))]
