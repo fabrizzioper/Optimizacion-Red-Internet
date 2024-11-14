@@ -11,23 +11,20 @@ def mapa_distritos(request):
     }
     return render(request, 'mapa_distritos.html', context)
 
-def cargar_grafo_miraflores(request):
-    # Ruta completa a los archivos de nodos y conexiones
+def cargar_grafo_distrito(request, distrito):
+    # Ruta a los archivos de nodos y conexiones
     data_path = r"C:\Users\fabri\OneDrive\Escritorio\Optimizacion-Red-Internet\Red_Internet_Complejidad_Algoritmita\Red_Internet\static\Datos_Lima"
 
-    # Imprimir archivos en el directorio para verificar
-    print("Archivos en Datos_Lima:", os.listdir(data_path))
-
-    # Archivos específicos para Miraflores
-    nodo_file = os.path.join(data_path, "Miraflores_nodos.json")
-    conexion_file = os.path.join(data_path, "Miraflores_conexiones.json")
+    # Archivos específicos para el distrito seleccionado
+    nodo_file = os.path.join(data_path, f"{distrito}_nodos.json")
+    conexion_file = os.path.join(data_path, f"{distrito}_conexiones.json")
 
     # Comprobar si los archivos existen antes de cargarlos
     if not os.path.exists(nodo_file) or not os.path.exists(conexion_file):
         return render(request, 'grafo_distritos.html', {
             'nodos_data': json.dumps([]),
             'conexiones_data': json.dumps([]),
-            'error_message': "Archivos de datos no encontrados."
+            'error_message': f"Archivos de datos no encontrados para el distrito {distrito}."
         })
 
     # Cargar datos de nodos y conexiones
@@ -41,5 +38,6 @@ def cargar_grafo_miraflores(request):
     context = {
         'nodos_data': json.dumps(nodos_data),
         'conexiones_data': json.dumps(conexiones_data),
+        'distrito': distrito  # Pasar el nombre del distrito para usar en el HTML
     }
     return render(request, 'grafo_distritos.html', context)
