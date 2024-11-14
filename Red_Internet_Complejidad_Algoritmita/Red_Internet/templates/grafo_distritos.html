@@ -1,74 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grafo de {{ distrito }}</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <style>
-        #map { height: 600px; width: 100%; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grafo de {{ distrito }}</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .navbar {
+      background-color: rgba(33, 37, 41, 0.95) !important;
+    }
+
+    #map {
+      height: 500px;
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .location-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    @media (min-width: 992px) {
+      #map {
+        height: 600px;
+      }
+    }
+  </style>
 </head>
 <body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-network-wired"></i> OptimizaRed
+      </a>
+    </div>
+  </nav>
 
-    <h2>Mapa de Grafo para {{ distrito }}</h2>
-    <div id="map"></div>
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-lg-8 col-12 mt-5 mt-3">
+        <h2>Mapa de Grafo para {{ distrito }}</h2>
+        <div id="map"></div>
+      </div>
+      <div class="col-lg-4 col-12 mt-5">
+        <div class="location-card mt-5">
+          <div class="mb-3">
+            <label class="form-label">Nodo Inicial</label>
+            <input type="text" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nodo Final</label>
+            <input type="text" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <button class="btn btn-primary w-100">Calcular Ruta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const map = L.map("map").setView([-12.121, -77.03], 13);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                maxZoom: 18,
-                attribution: "© OpenStreetMap contributors"
-            }).addTo(map);
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const map = L.map("map").setView([-12.121, -77.03], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 18,
+            attribution: "© OpenStreetMap contributors"
+        }).addTo(map);
 
-            // Datos pasados desde el backend como JSON seguro
-            const nodosData = JSON.parse(`{{ nodos_data|escapejs }}`);
-            const conexionesData = JSON.parse(`{{ conexiones_data|escapejs }}`);
+        // Datos pasados desde el backend como JSON seguro
+        const nodosData = JSON.parse(`{{ nodos_data|escapejs }}`);
+        const conexionesData = JSON.parse(`{{ conexiones_data|escapejs }}`);
 
-            // Agregar nodos al mapa
-            const nodeLayer = L.geoJSON(nodosData, {
-                pointToLayer: function (feature, latlng) {
-                    const marker = L.circleMarker(latlng, {
-                        radius: 5,
-                        fillColor: "#ff7800",
-                        color: "#000",
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    });
+        // Agregar nodos al mapa
+        const nodeLayer = L.geoJSON(nodosData, {
+            pointToLayer: function (feature, latlng) {
+                const marker = L.circleMarker(latlng, {
+                    radius: 5,
+                    fillColor: "#ff7800",
+                    color: "#000",
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
 
-                    const tooltipContent = `ID: ${feature.id || "No disponible"}`;
-                    marker.bindTooltip(tooltipContent, {
-                        permanent: false,
-                        direction: "top",
-                        offset: L.point(0, -5)
-                    });
+                const tooltipContent = `ID: ${feature.id || "No disponible"}`;
+                marker.bindTooltip(tooltipContent, {
+                    permanent: false,
+                    direction: "top",
+                    offset: L.point(0, -5)
+                });
 
-                    marker.on("mouseover", function () {
-                        this.setStyle({ radius: 8, fillColor: "#ff0000" });
-                    });
-                    marker.on("mouseout", function () {
-                        this.setStyle({ radius: 5, fillColor: "#ff7800" });
-                    });
-                    return marker;
-                }
-            }).addTo(map);
+                marker.on("mouseover", function () {
+                    this.setStyle({ radius: 8, fillColor: "#ff0000" });
+                });
+                marker.on("mouseout", function () {
+                    this.setStyle({ radius: 5, fillColor: "#ff7800" });
+                });
+                return marker;
+            }
+        }).addTo(map);
 
-            // Agregar conexiones al mapa
-            const edgeLayer = L.geoJSON(conexionesData, {
-                style: {
-                    color: "#00bfff",
-                    weight: 2,
-                    opacity: 0.6
-                }
-            }).addTo(map);
+        // Agregar conexiones al mapa
+        const edgeLayer = L.geoJSON(conexionesData, {
+            style: {
+                color: "#00bfff",
+                weight: 2,
+                opacity: 0.6
+            }
+        }).addTo(map);
 
-            map.fitBounds(nodeLayer.getBounds());
-        });
-    </script>
-
-<script src="{{ static_url }}script_grafo_distrito.js"></script>
+        map.fitBounds(nodeLayer.getBounds());
+    });
+</script>
 </body>
 </html>
+
