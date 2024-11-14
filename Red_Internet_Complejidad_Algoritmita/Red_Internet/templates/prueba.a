@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Optimización de Red - Lima</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <style>
+      .banner {
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+          url("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80");
+        background-size: cover;
+        background-position: center;
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-align: center;
+      }
+
+      #map {
+        height: 450px;
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .location-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .stats-card {
+        transition: transform 0.3s ease;
+        cursor: pointer;
+      }
+
+      .stats-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .network-status {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        display: inline-block;
+      }
+
+      .status-optimal {
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      .status-warning {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+
+      .navbar {
+        background-color: rgba(33, 37, 41, 0.95) !important;
+      }
+
+      .footer {
+        background-color: #212529;
+        color: white;
+        padding: 20px 0;
+        margin-top: 50px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+          <i class="fas fa-network-wired"></i> OptimizaRed
+        </a>
+        <!-- <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-home"></i> Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-chart-line"></i> Estadísticas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-map-marked-alt"></i> Cobertura</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-info-circle"></i> Acerca de</a>
+                    </li>
+                </ul>
+            </div>  -->
+      </div>
+    </nav>
+
+    <!-- Banner -->
+    <div class="banner">
+      <div class="container">
+        <h1 class="display-4 fw-bold">Optimización de Redes Lima</h1>
+        <p class="lead">
+          Análisis y mejora de la infraestructura de red en Lima Metropolitana
+        </p>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+      <div class="row">
+        <!-- Map -->
+        <div class="col-lg-8">
+          <div id="map"></div>
+        </div>
+
+        <!-- Location Selector -->
+        <div class="col-lg-4">
+          <div class="location-card">
+            <h3 class="mb-4">
+              <i class="fas fa-map-marker-alt"></i> Ubicación
+            </h3>
+            <div class="mb-3">
+              <label class="form-label">País</label>
+              <input type="text" class="form-control" value="Perú" disabled />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Ciudad</label>
+              <input type="text" class="form-control" value="Lima" disabled />
+            </div>
+            <div class="mb-3" id="selector-container">
+              <label class="form-label" for="district-select">Distrito</label>
+
+              <select class="form-select" id="district-select" place>
+                <option value="">Seleccione un distrito</option>
+                <option value="Miraflores">Miraflores</option>
+                <option value="Ancón">Ancón</option>
+                <option value="Ate">Ate</option>
+                <option value="Barranco">Barranco</option>
+                <option value="Breña">Breña</option>
+                <option value="Carabayllo">Carabayllo</option>
+                <option value="Chaclacayo">Chaclacayo</option>
+                <option value="Chorrillos">Chorrillos</option>
+                <option value="Cieneguilla">Cieneguilla</option>
+                <option value="Comas">Comas</option>
+                <option value="El Agustino">El Agustino</option>
+                <option value="Independencia">Independencia</option>
+                <option value="Jesús María">Jesús María</option>
+                <option value="La Molina">La Molina</option>
+                <option value="La Victoria">La Victoria</option>
+                <option value="Lima">Lima</option>
+                <option value="Lince">Lince</option>
+                <option value="Los Olivos">Los Olivos</option>
+                <option value="Lurigancho">Lurigancho</option>
+                <option value="Lurín">Lurín</option>
+                <option value="Magdalena del Mar">Magdalena del Mar</option>
+                <option value="Pachacámac">Pachacámac</option>
+                <option value="Pucusana">Pucusana</option>
+                <option value="Pueblo Libre">Pueblo Libre</option>
+                <option value="Puente Piedra">Puente Piedra</option>
+                <option value="Punta Hermosa">Punta Hermosa</option>
+                <option value="Punta Negra">Punta Negra</option>
+                <option value="Rímac">Rímac</option>
+                <option value="San Bartolo">San Bartolo</option>
+                <option value="San Borja">San Borja</option>
+                <option value="San Isidro">San Isidro</option>
+                <option value="San Juan de Lurigancho">
+                  San Juan de Lurigancho
+                </option>
+                <option value="San Juan de Miraflores">
+                  San Juan de Miraflores
+                </option>
+                <option value="San Luis">San Luis</option>
+                <option value="San Martín de Porres">
+                  San Martín de Porres
+                </option>
+                <option value="San Miguel">San Miguel</option>
+                <option value="Santa Anita">Santa Anita</option>
+                <option value="Santa María del Mar">Santa María del Mar</option>
+                <option value="Santa Rosa">Santa Rosa</option>
+                <option value="Santiago de Surco">Santiago de Surco</option>
+                <option value="Surquillo">Surquillo</option>
+                <option value="Villa El Salvador">Villa El Salvador</option>
+                <option value="Villa María del Triunfo">
+                  Villa María del Triunfo
+                </option>
+              </select>
+            </div>
+
+                <!-- ... contenido existente ... -->
+                <div class="mb-3">
+                    <a id="view-graph" href="#" class="btn btn-primary w-100" style="display: none;">
+                        Ver Grafo del Distrito
+                    </a>
+                </div>
+           
+
+          </div>
+
+        
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>OptimizaRed</h5>
+            <p>
+              Sistema de optimización y análisis de redes para Lima
+              Metropolitana
+            </p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <h5>Contacto</h5>
+            <p>
+              <i class="fas fa-envelope"></i> Grupo_10@optimizared.pe<br />
+              <i class="fas fa-phone"></i> (01) 123-4567
+            </p>
+          </div>
+        </div>
+        <hr />
+        <div class="text-center">
+          <p>
+            © 2024 OptimizaRed. Todos los derechos reservados - Grupo10 -
+            Fabrizzio Pereira.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <script>
+      // Inicializa el mapa centrado en Miraflores
+      //   const map = L.map("map").setView([-12.121, -77.03], 13);
+
+      //   // Capa base del mapa
+      //   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      //     maxZoom: 18,
+      //     attribution: "© OpenStreetMap contributors",
+      //   }).addTo(map);
+
+      //   // Capas para nodos y conexiones
+      //   let nodeLayer;
+      //   let edgeLayer;
+
+      //   // Función para cargar y mostrar nodos y conexiones de un distrito
+      //   function loadDistrictData(district) {
+      //     // Elimina las capas anteriores si existen
+      //     if (nodeLayer) {
+      //       map.removeLayer(nodeLayer);
+      //     }
+      //     if (edgeLayer) {
+      //       map.removeLayer(edgeLayer);
+      //     }
+
+      //     // Ruta del archivo GeoJSON del distrito seleccionado
+      //     const nodeFile = `{{ static_url }}Datos_Lima/${district}_nodos.json`;
+      //     const edgeFile = `{{ static_url }}Datos_Lima/${district}_conexiones.json`;
+
+      //     // Cargar nodos y conexiones del distrito
+      //     fetch(nodeFile)
+      //       .then((response) => response.json())
+      //       .then((nodes) => {
+      //         nodeLayer = L.geoJSON(nodes, {
+      //           pointToLayer: function (feature, latlng) {
+      //             return L.circleMarker(latlng, {
+      //               radius: 5,
+      //               fillColor: "#ff7800",
+      //               color: "#000",
+      //               weight: 1,
+      //               opacity: 1,
+      //               fillOpacity: 0.8,
+      //             });
+      //           },
+      //         }).addTo(map);
+      //         map.fitBounds(nodeLayer.getBounds()); // Ajustar el mapa a los nodos
+
+      //         // Agrega las conexiones
+      //         fetch(edgeFile)
+      //           .then((response) => response.json())
+      //           .then((edges) => {
+      //             edgeLayer = L.geoJSON(edges, {
+      //               style: {
+      //                 color: "#00bfff",
+      //                 weight: 2,
+      //                 opacity: 0.6,
+      //               },
+      //             }).addTo(map);
+      //           })
+      //           .catch((error) =>
+      //             console.error(`Error al cargar las conexiones: ${error}`)
+      //           );
+      //       })
+      //       .catch((error) =>
+      //         console.error(`Error al cargar los nodos: ${error}`)
+      //       );
+      //   }
+
+      //   // Cargar el mapa inicial de Miraflores
+      //   loadDistrictData("Miraflores");
+
+      //   // Actualizar el mapa cuando se selecciona un nuevo distrito
+      //   document
+      //     .getElementById("district-select")
+      //     .addEventListener("change", function () {
+      //       const selectedDistrict = this.value;
+      //       loadDistrictData(selectedDistrict);
+      //     });
+
+      // Inicializa el mapa centrado en Miraflores
+      // Inicializa el mapa centrado en Miraflores
+      const map = L.map("map").setView([-12.121, -77.03], 13);
+
+      // Capa base del mapa
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+        attribution: "© OpenStreetMap contributors",
+      }).addTo(map);
+
+      // Capas para nodos y conexiones
+      let nodeLayer;
+      let edgeLayer;
+
+      // Función para cargar y mostrar nodos y conexiones de un distrito
+      function loadDistrictData(district) {
+        // Elimina las capas anteriores si existen
+        if (nodeLayer) {
+          map.removeLayer(nodeLayer);
+        }
+        if (edgeLayer) {
+          map.removeLayer(edgeLayer);
+        }
+
+        // Ruta del archivo GeoJSON del distrito seleccionado
+        const nodeFile = `{{ static_url }}Datos_Lima/${district}_nodos.json`;
+        const edgeFile = `{{ static_url }}Datos_Lima/${district}_conexiones.json`;
+
+        // Cargar nodos y conexiones del distrito
+        fetch(nodeFile)
+          .then((response) => response.json())
+          .then((nodes) => {
+            nodeLayer = L.geoJSON(nodes, {
+              pointToLayer: function (feature, latlng) {
+                const marker = L.circleMarker(latlng, {
+                  radius: 5,
+                  fillColor: "#ff7800",
+                  color: "#000",
+                  weight: 1,
+                  opacity: 1,
+                  fillOpacity: 0.8,
+                });
+
+                // Tooltip simple mostrando solo el ID
+                const tooltipContent = `ID: ${feature.id || "No disponible"}`;
+                marker.bindTooltip(tooltipContent, {
+                  permanent: false,
+                  direction: "top",
+                  offset: L.point(0, -5),
+                });
+
+                // Popup simplificado
+                const popupContent = `
+            <div style="text-align: center; padding: 5px;">
+              <strong>ID:</strong> ${feature.id || "No disponible"}
+            </div>
+          `;
+                marker.bindPopup(popupContent);
+
+                // Eventos de interacción
+                marker.on("mouseover", function (e) {
+                  this.setStyle({
+                    radius: 8,
+                    fillColor: "#ff0000",
+                  });
+                });
+
+                marker.on("mouseout", function (e) {
+                  this.setStyle({
+                    radius: 5,
+                    fillColor: "#ff7800",
+                  });
+                });
+
+                return marker;
+              },
+            }).addTo(map);
+
+            map.fitBounds(nodeLayer.getBounds());
+
+            // Agrega las conexiones
+            fetch(edgeFile)
+              .then((response) => response.json())
+              .then((edges) => {
+                edgeLayer = L.geoJSON(edges, {
+                  style: {
+                    color: "#00bfff",
+                    weight: 2,
+                    opacity: 0.6,
+                  },
+                }).addTo(map);
+              })
+              .catch((error) =>
+                console.error(`Error al cargar las conexiones: ${error}`)
+              );
+          })
+          .catch((error) =>
+            console.error(`Error al cargar los nodos: ${error}`)
+          );
+      }
+
+      // Cargar el mapa inicial de Miraflores
+      loadDistrictData("Miraflores");
+
+      // Actualizar el mapa cuando se selecciona un nuevo distrito
+      document
+        .getElementById("district-select")
+        .addEventListener("change", function () {
+          const selectedDistrict = this.value;
+          loadDistrictData(selectedDistrict);
+        });
+    </script>
+
+    <script>
+      const viewGraphButton = document.getElementById("view-graph");
+
+      // Habilitar el botón cuando se selecciona un distrito
+      document
+        .getElementById("district-select")
+        .addEventListener("change", function () {
+          const selectedDistrict = this.value;
+          if (selectedDistrict) {
+            viewGraphButton.style.display = "block";
+            viewGraphButton.href = `/graph/${selectedDistrict}/`;
+          } else {
+            viewGraphButton.style.display = "none";
+          }
+        });
+    </script>
+  </body>
+</html>
