@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Grafo de {{ distrito }}</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -54,32 +54,50 @@
         <div class="location-card">
           <div class="mb-3">
             <label class="form-label">Nodo Inicial</label>
-            <input type="text" class="form-control" />
+            <input type="text" id="nodo-inicial" class="form-control" placeholder="ID del nodo inicial" />
           </div>
           <div class="mb-3">
             <label class="form-label">Nodo Final</label>
-            <input type="text" class="form-control" />
+            <input type="text" id="nodo-final" class="form-control" placeholder="ID del nodo final" />
           </div>
           <div class="mb-3">
-            <button class="btn btn-primary w-100">Calcular Ruta</button>
+            <button id="calcular-ruta" class="btn btn-primary w-100">Calcular Ruta</button>
+          </div>
+          <div id="resultado-ruta" class="mt-3">
+            <!-- Aquí se mostrará la distancia o mensajes de error -->
           </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Carga de Leaflet.js -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+  <!-- Carga de Axios desde jsDelivr -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <!-- Verificar que Axios está definido -->
+  <script>
+      if (typeof axios !== 'undefined') {
+          console.log('Axios se ha cargado correctamente.');
+      } else {
+          console.error('Axios NO se ha cargado correctamente.');
+      }
+  </script>
+
+  <!-- Tu script personalizado -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const map = L.map("map").setView([-12.121, -77.03], 13);
+        const map = L.map("map").setView([-11.7892352, -77.15018], 13);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 18,
             attribution: "© OpenStreetMap contributors"
         }).addTo(map);
 
         // Datos pasados desde el backend como JSON seguro
-        const nodosData = JSON.parse(`{{ nodos_data|escapejs }}`);
-        const conexionesData = JSON.parse(`{{ conexiones_data|escapejs }}`);
+        const nodosData = JSON.parse('{{ nodos_data|escapejs }}');
+        const conexionesData = JSON.parse('{{ conexiones_data|escapejs }}');
 
         // Agregar nodos al mapa
         const nodeLayer = L.geoJSON(nodosData, {
@@ -120,8 +138,97 @@
         }).addTo(map);
 
         map.fitBounds(nodeLayer.getBounds());
+
+        // Variables para almacenar la ruta y capas adicionales
+        let rutaLayer = null;
+
+        // Manejar el clic en el botón "Calcular Ruta"
+        document.getElementById('calcular-ruta').addEventListener('click', function () {
+            console.log('Botón "Calcular Ruta" clicado');  // Agregado para depuración
+
+            const nodoInicio = document.getElementById('nodo-inicial').value.trim();
+            const nodoFinal = document.getElementById('nodo-final').value.trim();
+            const distrito = "{{ distrito }}";  // Asegúrate de que 'distrito' esté disponible
+
+            console.log(`Nodo Inicio: ${nodoInicio}, Nodo Final: ${nodoFinal}, Distrito: ${distrito}`);  // Agregado para depuración
+
+            if (!nodoInicio || !nodoFinal) {
+                mostrarResultado('Por favor, ingresa ambos IDs de nodos.', 'danger');
+                console.log('Faltan IDs de nodos');  // Agregado para depuración
+                return;
+            }
+
+            // Enviar solicitud al servidor usando Axios
+            axios.post("{% url 'calcular_ruta' %}", {
+                nodo_inicio: nodoInicio,
+                nodo_final: nodoFinal,
+                distrito: distrito
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')  // Asegúrate de manejar CSRF
+                }
+            })
+            .then(function (response) {
+                console.log('Respuesta del servidor:', response.data);  // Agregado para depuración
+                const data = response.data;
+                if (data.error) {
+                    mostrarResultado(data.error, 'danger');
+                    console.log('Error en la respuesta:', data.error);  // Agregado
+                } else {
+                    mostrarResultado(`Distancia mínima: ${data.distancia}`, 'success');
+                    dibujarRuta(data.coordenadas);
+                    console.log('Ruta dibujada con éxito');  // Agregado
+                }
+            })
+            .catch(function (error) {
+                if (error.response && error.response.data && error.response.data.error) {
+                    mostrarResultado(error.response.data.error, 'danger');
+                    console.log('Error del servidor:', error.response.data.error);  // Ya agregado
+                } else {
+                    mostrarResultado('Ocurrió un error al calcular la ruta.', 'danger');
+                    console.log('Error en la solicitud:', error);  // Ya agregado
+                }
+            });
+        });
+
+        // Función para mostrar resultados o mensajes de error
+        function mostrarResultado(mensaje, tipo) {
+            const resultadoDiv = document.getElementById('resultado-ruta');
+            resultadoDiv.innerHTML = `<div class="alert alert-${tipo}" role="alert">${mensaje}</div>`;
+        }
+
+        // Función para dibujar la ruta en el mapa
+        function dibujarRuta(coordenadas) {
+            console.log('Dibujando ruta con coordenadas:', coordenadas);  // Agregado para depuración
+
+            // Remover la ruta anterior si existe
+            if (rutaLayer) {
+                map.removeLayer(rutaLayer);
+            }
+
+            rutaLayer = L.polyline(coordenadas, { color: 'red', weight: 4 }).addTo(map);
+            map.fitBounds(rutaLayer.getBounds());
+        }
+
+        // Función para obtener el token CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Verifica si esta cookie empieza con el nombre que buscamos
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            console.log(`Token CSRF obtenido: ${cookieValue}`);  // Agregado para depuración
+            return cookieValue;
+        }
     });
-</script>
+  </script>
 </body>
 </html>
-
